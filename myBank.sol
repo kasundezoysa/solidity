@@ -1,4 +1,4 @@
-pragma solidity ^0.4.25;
+pragma solidity >=0.4.22 <0.6.0;
 
 contract myBank {
     mapping (address=> uint) private balances;
@@ -8,8 +8,8 @@ contract myBank {
      owner=msg.sender;
  }
  
- function deposit() public payable{
-     balances[msg.sender]+=msg.value;
+ function deposit(uint amount) public{
+     balances[msg.sender]+=amount;
  }
  
  function withdraw(uint amount) public {
@@ -31,7 +31,7 @@ contract myBank {
    }
  }
 
- function balance() public constant returns(uint){
+ function balance() public view returns(uint){
    return balances[msg.sender];    
  }
 }
