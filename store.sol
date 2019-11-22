@@ -1,5 +1,4 @@
-pragma solidity ^0.4.0;
-
+pragma solidity >=0.4.22 <0.6.0;
 contract store {
     uint storedData;
     
@@ -11,7 +10,7 @@ contract store {
         storedData = x;
     }
     
-    function get() public constant returns (uint retVal) {
+    function get() public view returns (uint retVal) {
         return storedData;
     }
 }
