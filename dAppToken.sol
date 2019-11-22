@@ -1,15 +1,15 @@
-pragma solidity ^0.4.2;
+pragma solidity >=0.4.22 <0.6.0;
 
 contract dAppToken {
     string  public name = "dApp Token";
-    string  public symbol = "DAPP";
+    string  public symbol = "DAP";
     string  public standard = "DApp Token v1.0";
     uint256 public totalSupply;
 
     mapping(address => uint256) public balanceOf;
     mapping(address => mapping(address => uint256)) public allowance;
 
-    function DappToken (uint256 _initialSupply) public {
+    constructor(uint256 _initialSupply) public {
         balanceOf[msg.sender] = _initialSupply;
         totalSupply = _initialSupply;
     }
