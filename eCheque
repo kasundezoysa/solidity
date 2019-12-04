@@ -4,16 +4,38 @@ contract eCheque{
     string  public name = "Electronic Cheque Contract";
     string  public symbol = "ECC";
     string  public standard = "eCheque Token v1.0";
-    uint256 public totalSupply;
+    uint256 public totalSupply=1000000;
 
+    struct cheque{
+        uint amount;
+        address issuer;
+        address bank;
+        address owner;
+        uint date;
+    }
+    
     mapping(address => uint256) public balanceOf;
-    mapping(address => mapping(address => uint256)) public allowance;
+  //  mapping(uint256 => cheque) public chequeBook;
+    //mapping(address => chequeBook) public customers;
+  //  mapping(address => customers) public banks;
+    
+    mapping(address => mapping(address => mapping(uint256=>cheque))) public banks;
 
     constructor(uint256 _initialSupply) public {
         balanceOf[msg.sender] = _initialSupply;
         totalSupply = _initialSupply;
     }
 
+    function initCheque(address _to, uint256 cheque_no) public returns (bool success) {
+        require(balanceOf[msg.sender] >= 0);
+      //  cheque memory ch;
+        //ch=banks[msg.sender][_to][cheque_no];
+     //   ch.issuer=_to;
+      //  ch.bank=msg.sender;
+    //    ch.amount=100;
+        return true;
+    }
+  
   function init(address _to, uint256 _value) public returns (bool success) {
         require(balanceOf[msg.sender] >= 0);
         balanceOf[msg.sender] -= _value;
@@ -31,10 +53,10 @@ contract eCheque{
 
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
         require(_value <= balanceOf[_from]);
-        require(_value <= allowance[_from][msg.sender]);
+     //   require(_value <= allowance[_from][msg.sender]);
         balanceOf[_from] -= _value;
         balanceOf[_to] += _value;
-        allowance[_from][msg.sender] -= _value;
+       // allowance[_from][msg.sender] -= _value;
         return true;
     }
 }
