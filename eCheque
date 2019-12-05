@@ -1,11 +1,17 @@
 pragma solidity >=0.4.22 <0.6.0;
 
 contract eCheque{
-    string  public name = "Electronic Cheque Contract";
-    string  public symbol = "ECC";
-    string  public standard = "eCheque Token v1.0";
-    uint256 public totalSupply=1000000;
+ //   string  public protoclName = "Electronic Cheque Contract";
+  //  string  public symbol = "ECC";
+// string  public standard = "eCheque Token v1.0";
+    uint256 public totalSupply;
 
+    struct customer{
+        address bank;
+        uint256 chequeNo;
+        mapping(uint256 => cheque) cheques;
+    }
+    
     struct cheque{
         uint amount;
         address issuer;
@@ -15,48 +21,55 @@ contract eCheque{
     }
     
     mapping(address => uint256) public balanceOf;
-  //  mapping(uint256 => cheque) public chequeBook;
-    //mapping(address => chequeBook) public customers;
-  //  mapping(address => customers) public banks;
+    mapping(address => customer) public banks;
     
-    mapping(address => mapping(address => mapping(uint256=>cheque))) public banks;
-
     constructor(uint256 _initialSupply) public {
         balanceOf[msg.sender] = _initialSupply;
         totalSupply = _initialSupply;
     }
 
-    function initCheque(address _to, uint256 cheque_no) public returns (bool success) {
-        require(balanceOf[msg.sender] >= 0);
-      //  cheque memory ch;
-        //ch=banks[msg.sender][_to][cheque_no];
-     //   ch.issuer=_to;
-      //  ch.bank=msg.sender;
-    //    ch.amount=100;
-        return true;
+    function setCustomer(address _customer) public returns (bool success) {
+      banks[_customer].bank=msg.sender;
+      banks[_customer].chequeNo=1;
+      return true;
     }
-  
-  function init(address _to, uint256 _value) public returns (bool success) {
-        require(balanceOf[msg.sender] >= 0);
-        balanceOf[msg.sender] -= _value;
-        balanceOf[_to] += _value;
+    
+    function initCheque(address _from,uint256 _cheque_amount) public returns (bool success) {
+      assert(_cheque_amount>0);
+      require(_from == msg.sender);
+     
+      banks[_from].chequeNo+=1;
+      banks[_from].cheques[banks[_from].chequeNo].amount=_cheque_amount;
+      banks[_from].cheques[banks[_from].chequeNo].owner=_from;
+      
+      return true;
+    }
+
+    function confirmCheque(address _owner,uint256 _chequeNo) public returns (bool success) {
+      assert(_chequeNo>0);
+      
+      balanceOf[msg.sender]-=banks[_owner].cheques[_chequeNo].amount;
+      balanceOf[_owner]+=banks[_owner].cheques[_chequeNo].amount;
+      
+      return true;
+    }
+
+    function transfer(address _from, address _to, uint256 _chequeNo) public returns (bool success) {
+        assert(_chequeNo>0);
+        require(balanceOf[_from] >= banks[_from].cheques[_chequeNo].amount);
+        require(banks[_from].cheques[_chequeNo].owner == msg.sender);
+        
+      
+        balanceOf[_from] -= banks[_from].cheques[_chequeNo].amount;
+        balanceOf[_to] += banks[_from].cheques[_chequeNo].amount;
+        banks[_from].cheques[_chequeNo].owner=_to;
         return true;
     }
     
-    function transfer(address _to, uint256 _value) public returns (bool success) {
-        require(balanceOf[msg.sender] >= _value);
-
-        balanceOf[msg.sender] -= _value;
-        balanceOf[_to] += _value;
-        return true;
+    function getCheque(uint256 _chequeNo) public view returns (cheque) {
+        return banks[msg.sender].cheques[_chequeNo];
     }
+    
 
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
-        require(_value <= balanceOf[_from]);
-     //   require(_value <= allowance[_from][msg.sender]);
-        balanceOf[_from] -= _value;
-        balanceOf[_to] += _value;
-       // allowance[_from][msg.sender] -= _value;
-        return true;
-    }
+
 }
