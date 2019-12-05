@@ -4,7 +4,7 @@ contract eCheque{
  //   string  public protoclName = "Electronic Cheque Contract";
   //  string  public symbol = "ECC";
 // string  public standard = "eCheque Token v1.0";
-    uint256 public totalSupply;
+    uint256 public totalSupply=1000000;
 
     struct customer{
         address bank;
@@ -23,53 +23,99 @@ contract eCheque{
     mapping(address => uint256) public balanceOf;
     mapping(address => customer) public banks;
     
-    constructor(uint256 _initialSupply) public {
-        balanceOf[msg.sender] = _initialSupply;
-        totalSupply = _initialSupply;
+    constructor() public {
+        balanceOf[msg.sender] = totalSupply;
     }
 
+    function setBank(address _bank,uint256 _initialSuppl) public returns (bool success) {
+       require(balanceOf[msg.sender]>_initialSuppl);
+       balanceOf[msg.sender]-=_initialSuppl;
+       balanceOf[_bank]=_initialSuppl;
+       return true;
+    }
+    
     function setCustomer(address _customer) public returns (bool success) {
       banks[_customer].bank=msg.sender;
-      banks[_customer].chequeNo=1;
+      banks[_customer].chequeNo=0;
       return true;
     }
     
-    function initCheque(address _from,uint256 _cheque_amount) public returns (bool success) {
+    function setCheque(address _to,uint256 _cheque_amount) public returns (bool success) {
       assert(_cheque_amount>0);
-      require(_from == msg.sender);
+      
+      banks[_to].chequeNo+=1;
+      uint256 chequeNo = banks[_to].chequeNo;
+      
+      banks[_to].cheques[chequeNo].amount=_cheque_amount;
+      banks[_to].cheques[chequeNo].owner=_to;
+      banks[_to].cheques[chequeNo].issuer=_to;
+      banks[_to].cheques[chequeNo].bank=msg.sender;
+      
+      balanceOf[msg.sender]-=_cheque_amount;
+      balanceOf[_to]+=_cheque_amount;
      
-      banks[_from].chequeNo+=1;
-      banks[_from].cheques[banks[_from].chequeNo].amount=_cheque_amount;
-      banks[_from].cheques[banks[_from].chequeNo].owner=_from;
-      
       return true;
     }
 
-    function confirmCheque(address _owner,uint256 _chequeNo) public returns (bool success) {
+    function signCheque(uint256 _chequeNo,uint _date) public returns (bool success) {
+     
       assert(_chequeNo>0);
-      
-      balanceOf[msg.sender]-=banks[_owner].cheques[_chequeNo].amount;
-      balanceOf[_owner]+=banks[_owner].cheques[_chequeNo].amount;
+      banks[msg.sender].cheques[_chequeNo].date=_date;
       
       return true;
     }
 
-    function transfer(address _from, address _to, uint256 _chequeNo) public returns (bool success) {
+    function transfer(address _to, uint256 _chequeNo) public returns (bool success) {
         assert(_chequeNo>0);
-        require(balanceOf[_from] >= banks[_from].cheques[_chequeNo].amount);
-        require(banks[_from].cheques[_chequeNo].owner == msg.sender);
-        
+        address owner=getChequeOwner(_chequeNo);
+        address bank =getChequeBank(_chequeNo);
+        address issuer =getChequeIssuer(_chequeNo);
+        uint amount = getChequeAmount(_chequeNo);
       
-        balanceOf[_from] -= banks[_from].cheques[_chequeNo].amount;
-        balanceOf[_to] += banks[_from].cheques[_chequeNo].amount;
-        banks[_from].cheques[_chequeNo].owner=_to;
+        require(balanceOf[owner] >= amount);
+        require(owner == msg.sender);
+        
+        balanceOf[owner] -= amount;
+        balanceOf[_to] += amount;
+        banks[issuer].cheques[_chequeNo].owner=_to;
         return true;
     }
     
-    function getCheque(uint256 _chequeNo) public view returns (cheque) {
-        return banks[msg.sender].cheques[_chequeNo];
+    function deposit(uint256 _chequeNo, uint _date) public returns (bool success) {
+        assert(_chequeNo>0);
+        require(getChequeDate(_chequeNo)==_date);
+        
+        address owner=getChequeOwner(_chequeNo);
+        address bank =getChequeBank(_chequeNo);
+        uint amount = getChequeAmount(_chequeNo);
+        require(owner == msg.sender);
+       
+        balanceOf[owner] -= amount;
+        balanceOf[bank] += amount;
+        banks[bank].cheques[_chequeNo].owner=bank;
+        
+        return true;
     }
     
+    function getChequeAmount(uint256 _chequeNo) public view returns (uint) {
+        return banks[msg.sender].cheques[_chequeNo].amount;
+    }
 
-
+    function getChequeDate(uint256 _chequeNo) public view returns (uint) {
+        return banks[msg.sender].cheques[_chequeNo].date;
+    }
+    
+    function getChequeIssuer(uint256 _chequeNo) public view returns (address) {
+        return banks[msg.sender].cheques[_chequeNo].issuer;
+    }
+    
+    function getChequeOwner(uint256 _chequeNo) public view returns (address) {
+        return banks[msg.sender].cheques[_chequeNo].owner;
+    }
+    
+    function getChequeBank(uint256 _chequeNo) public view returns (address) {
+        return banks[msg.sender].cheques[_chequeNo].bank;
+    }
+    
+    
 }
