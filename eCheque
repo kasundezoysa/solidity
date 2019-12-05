@@ -18,6 +18,7 @@ contract eCheque{
         address bank;
         address owner;
         uint date;
+        bytes32 signature;
     }
     
     mapping(address => uint256) public balanceOf;
@@ -41,8 +42,9 @@ contract eCheque{
     }
     
     function setCheque(address _to,uint256 _cheque_amount) public returns (bool success) {
-      assert(_cheque_amount>0);
       
+      assert(_cheque_amount>0);
+      require(balanceOf[msg.sender]>_cheque_amount);
       banks[_to].chequeNo+=1;
       uint256 chequeNo = banks[_to].chequeNo;
       
@@ -57,21 +59,22 @@ contract eCheque{
       return true;
     }
 
-    function signCheque(uint256 _chequeNo,uint _date) public returns (bool success) {
+    function signCheque(uint256 _chequeNo,uint _date,bytes32 _sig) public returns (bool success) {
      
       assert(_chequeNo>0);
       banks[msg.sender].cheques[_chequeNo].date=_date;
+      banks[msg.sender].cheques[_chequeNo].signature=_sig;
       
       return true;
     }
 
-    function transfer(address _to, uint256 _chequeNo) public returns (bool success) {
+    function transfer(address _to, address _issuer, uint256 _chequeNo) public returns (bool success) {
         assert(_chequeNo>0);
-        address owner=getChequeOwner(_chequeNo);
-        address bank =getChequeBank(_chequeNo);
-        address issuer =getChequeIssuer(_chequeNo);
-        uint amount = getChequeAmount(_chequeNo);
-      
+        
+        address owner=getChequeOwner(_issuer,_chequeNo);
+        address issuer =getChequeIssuer(_issuer,_chequeNo);
+        uint amount = getChequeAmount(_issuer,_chequeNo);
+       
         require(balanceOf[owner] >= amount);
         require(owner == msg.sender);
         
@@ -81,13 +84,13 @@ contract eCheque{
         return true;
     }
     
-    function deposit(uint256 _chequeNo, uint _date) public returns (bool success) {
+    function deposit(address _issuer,uint256 _chequeNo) public returns (bool success) {
         assert(_chequeNo>0);
-        require(getChequeDate(_chequeNo)==_date);
+        require(now >getChequeDate(_issuer,_chequeNo));
         
-        address owner=getChequeOwner(_chequeNo);
-        address bank =getChequeBank(_chequeNo);
-        uint amount = getChequeAmount(_chequeNo);
+        address owner=getChequeOwner(_issuer,_chequeNo);
+        address bank =getChequeBank(_issuer,_chequeNo);
+        uint amount = getChequeAmount(_issuer,_chequeNo);
         require(owner == msg.sender);
        
         balanceOf[owner] -= amount;
@@ -97,24 +100,24 @@ contract eCheque{
         return true;
     }
     
-    function getChequeAmount(uint256 _chequeNo) public view returns (uint) {
-        return banks[msg.sender].cheques[_chequeNo].amount;
+    function getChequeAmount(address _issuer,uint256 _chequeNo) public view returns (uint) {
+        return banks[_issuer].cheques[_chequeNo].amount;
     }
 
-    function getChequeDate(uint256 _chequeNo) public view returns (uint) {
-        return banks[msg.sender].cheques[_chequeNo].date;
+    function getChequeDate(address _issuer,uint256 _chequeNo) public view returns (uint) {
+        return banks[_issuer].cheques[_chequeNo].date;
     }
     
-    function getChequeIssuer(uint256 _chequeNo) public view returns (address) {
-        return banks[msg.sender].cheques[_chequeNo].issuer;
+    function getChequeIssuer(address _issuer, uint256 _chequeNo) public view returns (address) {
+        return banks[_issuer].cheques[_chequeNo].issuer;
     }
     
-    function getChequeOwner(uint256 _chequeNo) public view returns (address) {
-        return banks[msg.sender].cheques[_chequeNo].owner;
+    function getChequeOwner(address _issuer,uint256 _chequeNo) public view returns (address) {
+        return banks[_issuer].cheques[_chequeNo].owner;
     }
     
-    function getChequeBank(uint256 _chequeNo) public view returns (address) {
-        return banks[msg.sender].cheques[_chequeNo].bank;
+    function getChequeBank(address _issuer,uint256 _chequeNo) public view returns (address) {
+        return banks[_issuer].cheques[_chequeNo].bank;
     }
     
     
