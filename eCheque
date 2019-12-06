@@ -69,6 +69,7 @@ contract eCheque{
       return true;
     }
 
+    //The payer will save the signature by using this function
     function signCheque(uint256 _chequeNo,uint _date,bytes32 _sig) public returns (bool success) {
      
       assert(_chequeNo>0);
@@ -78,6 +79,7 @@ contract eCheque{
       return true;
     }
 
+    //The cheque is transferd from one party to the other party by calling this function
     function transferCheque(address _to, address _issuer, uint256 _chequeNo) public returns (bool success) {
         assert(_chequeNo>0);
         
@@ -94,6 +96,7 @@ contract eCheque{
         return true;
     }
     
+    //The cheque deposit function
     function depositCheque(address _issuer,uint256 _chequeNo) public returns (bool success) {
         assert(_chequeNo>0);
         require(now >getChequeDate(_issuer,_chequeNo));
@@ -110,6 +113,7 @@ contract eCheque{
         return true;
     }
     
+   //A bank will call this function in case of settlement delay
    function settlementDelay(address _issuer, int256 _cheque_amount) public returns (bool success){
        assert(_cheque_amount>0);
        balanceOf[_issuer]-=_cheque_amount;
@@ -119,6 +123,7 @@ contract eCheque{
     
    }
     
+    //The following are helper functions
     function getChequeAmount(address _issuer,uint256 _chequeNo) public view returns (int256) {
         return banks[_issuer].cheques[_chequeNo].amount;
     }
