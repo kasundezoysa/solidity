@@ -1,19 +1,23 @@
 pragma solidity >=0.4.22 <0.6.0;
 
-contract eCheque{
- //   string  public protoclName = "Electronic Cheque Contract";
-  //  string  public symbol = "ECC";
-// string  public standard = "eCheque Token v1.0";
-    uint256 public totalSupply=1000000;
+//THE NEXT GENERATION CHEQUE SETTLEMENT CONTRACT
 
+contract eCheque{
+    //Total amount of token supply is given here
+    int256 public totalSupply=1000000;
+
+    //The sample customer data structure
+    // If necessay additional fileds can be included here
     struct customer{
+        uint256 nic;
         address bank;
         uint256 chequeNo;
         mapping(uint256 => cheque) cheques;
     }
     
+    //The sample cheque data structure
     struct cheque{
-        uint amount;
+        int256 amount;
         address issuer;
         address bank;
         address owner;
@@ -21,27 +25,33 @@ contract eCheque{
         bytes32 signature;
     }
     
-    mapping(address => uint256) public balanceOf;
+    //This keeps the balces of crypto tokens.
+    mapping(address => int256) public balanceOf;
+    //This keeps the list of customers and list of cheques
     mapping(address => customer) public banks;
     
+    //The constructor set the totol supply
     constructor() public {
         balanceOf[msg.sender] = totalSupply;
     }
-
-    function setBank(address _bank,uint256 _initialSuppl) public returns (bool success) {
+    
+    // This function initializes a bank
+    function setBank(address _bank,int256 _initialSuppl) public returns (bool success) {
        require(balanceOf[msg.sender]>_initialSuppl);
        balanceOf[msg.sender]-=_initialSuppl;
        balanceOf[_bank]=_initialSuppl;
        return true;
     }
     
+    //This function initializes a customer
     function setCustomer(address _customer) public returns (bool success) {
       banks[_customer].bank=msg.sender;
       banks[_customer].chequeNo=0;
       return true;
     }
     
-    function setCheque(address _to,uint256 _cheque_amount) public returns (bool success) {
+    //This function initializes a cheque
+    function initCheque(address _to,int256 _cheque_amount) public returns (bool success) {
       
       assert(_cheque_amount>0);
       require(balanceOf[msg.sender]>_cheque_amount);
@@ -68,12 +78,12 @@ contract eCheque{
       return true;
     }
 
-    function transfer(address _to, address _issuer, uint256 _chequeNo) public returns (bool success) {
+    function transferCheque(address _to, address _issuer, uint256 _chequeNo) public returns (bool success) {
         assert(_chequeNo>0);
         
         address owner=getChequeOwner(_issuer,_chequeNo);
         address issuer =getChequeIssuer(_issuer,_chequeNo);
-        uint amount = getChequeAmount(_issuer,_chequeNo);
+        int256 amount = getChequeAmount(_issuer,_chequeNo);
        
         require(balanceOf[owner] >= amount);
         require(owner == msg.sender);
@@ -84,13 +94,13 @@ contract eCheque{
         return true;
     }
     
-    function deposit(address _issuer,uint256 _chequeNo) public returns (bool success) {
+    function depositCheque(address _issuer,uint256 _chequeNo) public returns (bool success) {
         assert(_chequeNo>0);
         require(now >getChequeDate(_issuer,_chequeNo));
         
         address owner=getChequeOwner(_issuer,_chequeNo);
         address bank =getChequeBank(_issuer,_chequeNo);
-        uint amount = getChequeAmount(_issuer,_chequeNo);
+        int256 amount = getChequeAmount(_issuer,_chequeNo);
         require(owner == msg.sender);
        
         balanceOf[owner] -= amount;
@@ -100,7 +110,16 @@ contract eCheque{
         return true;
     }
     
-    function getChequeAmount(address _issuer,uint256 _chequeNo) public view returns (uint) {
+   function settlementDelay(address _issuer, int256 _cheque_amount) public returns (bool success){
+       assert(_cheque_amount>0);
+       balanceOf[_issuer]-=_cheque_amount;
+       balanceOf[msg.sender]+=_cheque_amount;
+       
+      return true;
+    
+   }
+    
+    function getChequeAmount(address _issuer,uint256 _chequeNo) public view returns (int256) {
         return banks[_issuer].cheques[_chequeNo].amount;
     }
 
